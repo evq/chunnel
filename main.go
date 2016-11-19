@@ -28,6 +28,8 @@ func main() {
 	}
 	tunnel := utils.NewDockerTunnel(user, host, port)
 	os.Setenv("DOCKER_HOST", tunnel.LocalAddr)
+	os.Setenv("DOCKER_CERT_PATH", "")
+	os.Unsetenv("DOCKER_TLS_VERIFY")
 
 	cmd := exec.Command(cmdProg, cmdArgs...)
 	cmd.Stdin = os.Stdin
@@ -35,12 +37,23 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	scanner := bufio.NewScanner(stdout)
+	stdoutScanner := bufio.NewScanner(stdout)
 	go func() {
-		for scanner.Scan() {
-			fmt.Printf("%s\n", scanner.Text())
+		for stdoutScanner.Scan() {
+			fmt.Printf("%s\n", stdoutScanner.Text())
 		}
 	}()
+	stderr, err := cmd.StderrPipe()
+	if err != nil {
+		log.Fatal(err)
+	}
+	stderrScanner := bufio.NewScanner(stderr)
+	go func() {
+		for stderrScanner.Scan() {
+			fmt.Printf("%s\n", stderrScanner.Text())
+		}
+	}()
+
 	if err := cmd.Start(); err != nil {
 		log.Fatal(err)
 	}
