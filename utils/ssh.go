@@ -90,8 +90,9 @@ func SSHAgent() ssh.AuthMethod {
 
 func NewDockerTunnel(user string, serverHost string, serverPort int) *SSHTunnel {
 	sshConfig := &ssh.ClientConfig{
-		User: user,
-		Auth: []ssh.AuthMethod{SSHAgent()},
+		User:            user,
+		HostKeyCallback: ssh.InsecureIgnoreHostKey(),
+		Auth:            []ssh.AuthMethod{SSHAgent()},
 	}
 	serverConn, err := ssh.Dial("tcp", fmt.Sprintf("%s:%d", serverHost, serverPort), sshConfig)
 	if err != nil {
